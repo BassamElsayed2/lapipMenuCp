@@ -103,8 +103,8 @@ export async function getProducts(
   };
 }
 
-export async function getProductById(id: string): Promise<ProductWithTypes> {
-  // First get the product
+export async function getProductById(id: string): Promise<Product> {
+  // Get the product only (no types or sizes)
   const { data: product, error: productError } = await supabase
     .from("products")
     .select("*")
@@ -113,41 +113,7 @@ export async function getProductById(id: string): Promise<ProductWithTypes> {
 
   if (productError) throw productError;
 
-  // Get product types
-  const { data: types, error: typesError } = await supabase
-    .from("product_types")
-    .select("*")
-    .eq("product_id", id);
-
-  if (typesError) {
-    console.error("Error fetching product types:", typesError);
-  }
-
-  // Get sizes for all types
-  const typesWithSizes: ProductTypeWithSizes[] = [];
-
-  if (types && types.length > 0) {
-    for (const type of types) {
-      const { data: sizes, error: sizesError } = await supabase
-        .from("product_sizes")
-        .select("*")
-        .eq("type_id", type.id);
-
-      if (sizesError) {
-        console.error(`Error fetching sizes for type ${type.id}:`, sizesError);
-      }
-
-      typesWithSizes.push({
-        ...type,
-        sizes: sizes || [],
-      });
-    }
-  }
-
-  return {
-    ...product,
-    types: typesWithSizes,
-  };
+  return product;
 }
 
 export async function createProduct(productData: Product): Promise<Product> {
@@ -292,15 +258,12 @@ export async function deleteProduct(id: string) {
 
 export async function updateProduct(
   id: string,
-  updatedProduct: Partial<ProductWithTypes>
-): Promise<ProductWithTypes> {
-  // Extract types from updatedProduct
-  const { types, ...productData } = updatedProduct;
-
-  // Update the product
+  updatedProduct: Partial<Product>
+): Promise<Product> {
+  // Update the product (no need to handle types anymore)
   const { error: productError } = await supabase
     .from("products")
-    .update(productData)
+    .update(updatedProduct)
     .eq("id", id);
 
   if (productError) {
@@ -308,45 +271,17 @@ export async function updateProduct(
     throw new Error("تعذر تحديث المنتج");
   }
 
-  // Handle types if provided
-  if (types) {
-    // Delete existing types and their sizes (cascade will handle sizes)
-    await supabase.from("product_types").delete().eq("product_id", id);
+  // Return the updated product
+  const { data: product, error: fetchError } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-    // Insert new types
-    for (const type of types) {
-      const { sizes, ...typeData } = type;
-
-      // Insert the type
-      const { data: insertedType, error: typeError } = await supabase
-        .from("product_types")
-        .insert({ ...typeData, product_id: id })
-        .select()
-        .single();
-
-      if (typeError) {
-        console.error("خطأ في إدراج نوع المنتج:", typeError.message);
-        continue;
-      }
-
-      // Insert sizes for this type
-      if (sizes && sizes.length > 0) {
-        const sizesData = sizes.map((size) => ({
-          ...size,
-          type_id: insertedType.id,
-        }));
-
-        const { error: sizesError } = await supabase
-          .from("product_sizes")
-          .insert(sizesData);
-
-        if (sizesError) {
-          console.error("خطأ في إدراج أحجام المنتج:", sizesError.message);
-        }
-      }
-    }
+  if (fetchError) {
+    console.error("خطأ في جلب المنتج المحدث:", fetchError.message);
+    throw new Error("تعذر جلب المنتج المحدث");
   }
 
-  // Return the updated product with types
-  return getProductById(id);
+  return product;
 }

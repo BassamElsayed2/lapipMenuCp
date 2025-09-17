@@ -137,11 +137,7 @@ const CreateProductForm: React.FC = () => {
       return;
     }
 
-    // تحقق من وجود صورة
-    if (!selectedImage) {
-      toast.error("يجب إضافة صورة واحدة على الأقل");
-      return;
-    }
+    // الصورة اختيارية - لا نحتاج للتحقق من وجودها
 
     // تحقق من السعر
     if (!data.price || data.price <= 0) {
@@ -152,8 +148,12 @@ const CreateProductForm: React.FC = () => {
     try {
       setIsUploadingImage(true);
 
-      // ارفع الصورة أولاً
-      const uploadedImageUrl = await uploadProductImage(selectedImage);
+      let uploadedImageUrl: string | undefined;
+
+      // ارفع الصورة فقط إذا تم اختيارها
+      if (selectedImage) {
+        uploadedImageUrl = await uploadProductImage(selectedImage);
+      }
 
       const finalData: Product = {
         title_ar: data.title_ar,
@@ -338,7 +338,7 @@ const CreateProductForm: React.FC = () => {
 
                   <div className="sm:col-span-2 mb-[20px] sm:mb-0">
                     <label className="mb-[10px] text-black dark:text-white font-medium block">
-                      وصف المنتج (بالعربي)
+                      وصف المنتج (بالعربي) - اختياري
                     </label>
                     <EditorProvider>
                       <Editor
@@ -377,7 +377,7 @@ const CreateProductForm: React.FC = () => {
 
                   <div className="sm:col-span-2 mb-[20px] sm:mb-0">
                     <label className="mb-[10px] text-black dark:text-white font-medium block">
-                      وصف المنتج (بالانجليزي)
+                      وصف المنتج (بالانجليزي) - اختياري
                     </label>
                     <EditorProvider>
                       <Editor
@@ -416,7 +416,7 @@ const CreateProductForm: React.FC = () => {
 
                   <div className="sm:col-span-2 mb-[20px] sm:mb-0">
                     <label className="mb-[10px] text-black dark:text-white font-medium block">
-                      صورة المنتج
+                      صورة المنتج - اختياري
                     </label>
 
                     <div id="fileUploader">
