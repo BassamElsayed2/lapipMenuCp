@@ -385,40 +385,117 @@ const ProductListTable: React.FC = () => {
                 )}
               </tbody>
             </table>
-            <div className=" flex justify-between">
-              <p className="mt-2 text-gray-600 dark:text-gray-300 text-sm">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
                 عرض {endIndex} منتجات من اجمالي {total} منتج
               </p>
 
-              <div className="mt-4 flex justify-center gap-2">
+              <div className="flex items-center gap-2">
+                {/* Previous Button */}
                 <button
                   onClick={() =>
                     setCurrentPage((prev) => Math.max(prev - 1, 1))
                   }
                   disabled={currentPage === 1}
-                  className="px-3 py-1 border rounded disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-[#15203c] border border-gray-300 dark:border-[#172036] rounded-lg hover:bg-gray-50 dark:hover:bg-[#1a2332] hover:border-primary-500 dark:hover:border-primary-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-[#15203c] disabled:hover:border-gray-300 dark:disabled:hover:border-[#172036]"
                 >
+                  <i className="material-symbols-outlined text-lg">
+                    chevron_right
+                  </i>
                   السابق
                 </button>
-                {Array.from({ length: totalPages }, (_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => setCurrentPage(i + 1)}
-                    className={`px-3 py-1 border rounded ${
-                      currentPage === i + 1 ? "bg-primary-500 text-white" : ""
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
+
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {(() => {
+                    const pages = [];
+                    const maxVisiblePages = 5;
+                    let startPage = Math.max(
+                      1,
+                      currentPage - Math.floor(maxVisiblePages / 2)
+                    );
+                    const endPage = Math.min(
+                      totalPages,
+                      startPage + maxVisiblePages - 1
+                    );
+
+                    if (endPage - startPage + 1 < maxVisiblePages) {
+                      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                    }
+
+                    // First page and ellipsis
+                    if (startPage > 1) {
+                      pages.push(
+                        <button
+                          key={1}
+                          onClick={() => setCurrentPage(1)}
+                          className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-[#15203c] border border-gray-300 dark:border-[#172036] rounded-lg hover:bg-gray-50 dark:hover:bg-[#1a2332] hover:border-primary-500 dark:hover:border-primary-500 transition-all duration-200"
+                        >
+                          1
+                        </button>
+                      );
+                      if (startPage > 2) {
+                        pages.push(
+                          <span key="ellipsis1" className="px-2 text-gray-500">
+                            ...
+                          </span>
+                        );
+                      }
+                    }
+
+                    // Visible pages
+                    for (let i = startPage; i <= endPage; i++) {
+                      pages.push(
+                        <button
+                          key={i}
+                          onClick={() => setCurrentPage(i)}
+                          className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                            currentPage === i
+                              ? "bg-primary-500 text-white border border-primary-500 shadow-lg shadow-primary-500/25"
+                              : "text-gray-700 dark:text-gray-300 bg-white dark:bg-[#15203c] border border-gray-300 dark:border-[#172036] hover:bg-gray-50 dark:hover:bg-[#1a2332] hover:border-primary-500 dark:hover:border-primary-500"
+                          }`}
+                        >
+                          {i}
+                        </button>
+                      );
+                    }
+
+                    // Last page and ellipsis
+                    if (endPage < totalPages) {
+                      if (endPage < totalPages - 1) {
+                        pages.push(
+                          <span key="ellipsis2" className="px-2 text-gray-500">
+                            ...
+                          </span>
+                        );
+                      }
+                      pages.push(
+                        <button
+                          key={totalPages}
+                          onClick={() => setCurrentPage(totalPages)}
+                          className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-[#15203c] border border-gray-300 dark:border-[#172036] rounded-lg hover:bg-gray-50 dark:hover:bg-[#1a2332] hover:border-primary-500 dark:hover:border-primary-500 transition-all duration-200"
+                        >
+                          {totalPages}
+                        </button>
+                      );
+                    }
+
+                    return pages;
+                  })()}
+                </div>
+
+                {/* Next Button */}
                 <button
                   onClick={() =>
                     setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                   }
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1 border rounded disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-[#15203c] border border-gray-300 dark:border-[#172036] rounded-lg hover:bg-gray-50 dark:hover:bg-[#1a2332] hover:border-primary-500 dark:hover:border-primary-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-[#15203c] disabled:hover:border-gray-300 dark:disabled:hover:border-[#172036]"
                 >
                   التالي
+                  <i className="material-symbols-outlined text-lg">
+                    chevron_left
+                  </i>
                 </button>
               </div>
             </div>
