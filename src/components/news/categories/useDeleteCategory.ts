@@ -43,6 +43,7 @@ export function useDeleteCategory() {
     onSuccess: () => {
       toast.success("تم حذف التصنيف بنجاح");
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["parent-categories"] });
     },
     onError: (error) => {
       toast.error("فشل في حذف التصنيف: " + error.message);

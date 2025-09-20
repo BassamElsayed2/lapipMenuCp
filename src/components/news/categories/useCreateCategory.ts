@@ -10,10 +10,12 @@ export function useAddCategory() {
       name_ar,
       name_en,
       image,
+      parent_id,
     }: {
       name_ar: string;
       name_en: string;
       image?: File;
+      parent_id?: string | null;
     }) => {
       let image_url = undefined;
 
@@ -35,13 +37,14 @@ export function useAddCategory() {
 
       const { error } = await supabase
         .from("categories")
-        .insert([{ name_ar, name_en, image_url }]);
+        .insert([{ name_ar, name_en, image_url, parent_id }]);
 
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
       toast.success("تمت إضافة التصنيف بنجاح");
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["parent-categories"] });
     },
     onError: (error) => {
       toast.error("فشل في إضافة التصنيف: " + error.message);

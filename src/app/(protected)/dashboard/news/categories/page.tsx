@@ -1,10 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { useCategories } from "@/components/news/categories/useCategories";
+import {
+  useCategories,
+  useParentCategories,
+} from "@/components/news/categories/useCategories";
 import { useUpdateCategory } from "@/components/news/categories/useUpdateCategory";
 import { useDeleteCategory } from "@/components/news/categories/useDeleteCategory";
 import { useAddCategory } from "@/components/news/categories/useCreateCategory";
+import { type CategoryWithChildren } from "@/services/apiCategories";
 import Link from "next/link";
 
 interface Category {
@@ -12,10 +16,12 @@ interface Category {
   name_ar: string;
   name_en: string;
   image_url?: string | null;
+  parent_id?: string | null;
 }
 
 export default function CategoriesPage() {
   const { data: categories, isLoading, isError, refetch } = useCategories();
+  const { data: parentCategories } = useParentCategories();
 
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(
@@ -27,11 +33,13 @@ export default function CategoriesPage() {
   const [editEn, setEditEn] = useState("");
   const [editImage, setEditImage] = useState<File | null>(null);
   const [editImagePreview, setEditImagePreview] = useState<string>("");
+  const [editParentId, setEditParentId] = useState<string | null>(null);
 
   const [newAr, setNewAr] = useState("");
   const [newEn, setNewEn] = useState("");
   const [newImage, setNewImage] = useState<File | null>(null);
   const [newImagePreview, setNewImagePreview] = useState<string>("");
+  const [newParentId, setNewParentId] = useState<string | null>(null);
 
   const { updateCategory, isPending: isUpdating } = useUpdateCategory();
   const { deleteCategory, isPending: isDeleting } = useDeleteCategory();
@@ -58,6 +66,7 @@ export default function CategoriesPage() {
     setEditAr(cat.name_ar);
     setEditEn(cat.name_en);
     setEditImagePreview(cat.image_url || "");
+    setEditParentId(cat.parent_id || null);
   };
 
   const closeEditModal = () => {
@@ -66,6 +75,7 @@ export default function CategoriesPage() {
     setEditEn("");
     setEditImage(null);
     setEditImagePreview("");
+    setEditParentId(null);
   };
 
   const handleEditSave = () => {
@@ -76,6 +86,7 @@ export default function CategoriesPage() {
         name_ar: editAr.trim(),
         name_en: editEn.trim(),
         image: editImage || undefined,
+        parent_id: editParentId,
       },
       {
         onSuccess: () => {
@@ -106,6 +117,7 @@ export default function CategoriesPage() {
         name_ar: newAr.trim(),
         name_en: newEn.trim(),
         image: newImage || undefined,
+        parent_id: newParentId,
       },
       {
         onSuccess: () => {
@@ -113,6 +125,7 @@ export default function CategoriesPage() {
           setNewEn("");
           setNewImage(null);
           setNewImagePreview("");
+          setNewParentId(null);
           setIsAddModalOpen(false);
           refetch();
         },
@@ -177,7 +190,7 @@ export default function CategoriesPage() {
             <table className="w-full">
               <thead className="text-black dark:text-white">
                 <tr>
-                  {["التصنيف", "الاجرائات"].map((header) => (
+                  {["التصنيف", "النوع", "الاجرائات"].map((header) => (
                     <th
                       key={header}
                       className="font-medium ltr:text-left rtl:text-right px-[20px] py-[11px] bg-gray-50 dark:bg-[#15203c] whitespace-nowrap ltr:first:rounded-tl-md ltr:last:rounded-tr-md rtl:first:rounded-tr-md rtl:last:rounded-tl-md"
@@ -191,82 +204,175 @@ export default function CategoriesPage() {
               <tbody className="text-black dark:text-white">
                 {categories?.length === 0 ? (
                   <tr>
-                    <td colSpan={2} className="text-center py-8 text-gray-500">
+                    <td colSpan={3} className="text-center py-8 text-gray-500">
                       لا توجد تصنيفات متاحة
                     </td>
                   </tr>
                 ) : (
                   categories?.map((cat) => (
-                    <tr key={cat.id}>
-                      <td className="ltr:text-left rtl:text-right whitespace-nowrap px-[20px] py-[15px] border-b border-gray-100 dark:border-[#172036] ltr:first:border-l ltr:last:border-r rtl:first:border-r rtl:last:border-l">
-                        <div className="flex items-center text-black dark:text-white transition-all hover:text-primary-500">
-                          <div className="relative w-[40px] h-[40px]">
-                            {cat.image_url ? (
-                              <img
-                                src={cat.image_url}
-                                alt={cat.name_ar}
-                                className="w-full h-full object-cover rounded-md"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gray-100 dark:bg-[#15203c] rounded-md flex items-center justify-center">
-                                <i className="material-symbols-outlined text-gray-400 dark:text-gray-500 text-xl">
-                                  image
+                    <React.Fragment key={cat.id}>
+                      {/* التصنيف الرئيسي */}
+                      <tr>
+                        <td className="ltr:text-left rtl:text-right whitespace-nowrap px-[20px] py-[15px] border-b border-gray-100 dark:border-[#172036] ltr:first:border-l ltr:last:border-r rtl:first:border-r rtl:last:border-l">
+                          <div className="flex items-center text-black dark:text-white transition-all hover:text-primary-500">
+                            <div className="relative w-[40px] h-[40px]">
+                              {cat.image_url ? (
+                                <img
+                                  src={cat.image_url}
+                                  alt={cat.name_ar}
+                                  className="w-full h-full object-cover rounded-md"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gray-100 dark:bg-[#15203c] rounded-md flex items-center justify-center">
+                                  <i className="material-symbols-outlined text-gray-400 dark:text-gray-500 text-xl">
+                                    image
+                                  </i>
+                                </div>
+                              )}
+                            </div>
+                            <div className="ltr:ml-[12px] rtl:mr-[12px]">
+                              <span className="block text-[15px] font-medium">
+                                {cat.name_ar}
+                              </span>
+                              <span className="block text-[13px] text-gray-500 dark:text-gray-400">
+                                {cat.name_en}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="ltr:text-left rtl:text-right whitespace-nowrap px-[20px] py-[15px] border-b border-gray-100 dark:border-[#172036] ltr:first:border-l ltr:last:border-r rtl:first:border-r rtl:last:border-l">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            تصنيف رئيسي
+                          </span>
+                        </td>
+
+                        <td className="ltr:text-left rtl:text-right whitespace-nowrap px-[20px] py-[15px] border-b border-gray-100 dark:border-[#172036] ltr:first:border-l ltr:last:border-r rtl:first:border-r rtl:last:border-l">
+                          <div className="flex items-center gap-[9px]">
+                            <div className="relative group">
+                              <button
+                                onClick={() => openEditModal(cat)}
+                                className="text-gray-500 leading-none"
+                                type="button"
+                              >
+                                <i className="material-symbols-outlined !text-md">
+                                  edit
                                 </i>
+                              </button>
+
+                              {/* Tooltip */}
+                              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                تعديل
+                                {/* Arrow */}
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-white dark:border-[#172036] border-t-gray-800 dark:border-t-gray-800"></div>
                               </div>
-                            )}
-                          </div>
-                          <div className="ltr:ml-[12px] rtl:mr-[12px]">
-                            <span className="block text-[15px] font-medium">
-                              {cat.name_ar}
-                            </span>
-                            <span className="block text-[13px] text-gray-500 dark:text-gray-400">
-                              {cat.name_en}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
+                            </div>
 
-                      <td className="ltr:text-left rtl:text-right whitespace-nowrap px-[20px] py-[15px] border-b border-gray-100 dark:border-[#172036] ltr:first:border-l ltr:last:border-r rtl:first:border-r rtl:last:border-l">
-                        <div className="flex items-center gap-[9px]">
-                          <div className="relative group">
-                            <button
-                              onClick={() => openEditModal(cat)}
-                              className="text-gray-500 leading-none"
-                              type="button"
-                            >
-                              <i className="material-symbols-outlined !text-md">
-                                edit
-                              </i>
-                            </button>
+                            <div className="relative group">
+                              <button
+                                onClick={() => openDeleteModal(cat)}
+                                className="text-danger-500 leading-none"
+                              >
+                                <i className="material-symbols-outlined !text-md">
+                                  delete
+                                </i>
+                              </button>
 
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              تعديل
-                              {/* Arrow */}
-                              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-white dark:border-[#172036] border-t-gray-800 dark:border-t-gray-800"></div>
+                              {/* Tooltip */}
+                              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                مسح
+                                {/* Arrow */}
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-white dark:border-[#172036] border-t-gray-800 dark:border-t-gray-800"></div>
+                              </div>
                             </div>
                           </div>
+                        </td>
+                      </tr>
 
-                          <div className="relative group">
-                            <button
-                              onClick={() => openDeleteModal(cat)}
-                              className="text-danger-500 leading-none"
-                            >
-                              <i className="material-symbols-outlined !text-md">
-                                delete
-                              </i>
-                            </button>
-
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              مسح
-                              {/* Arrow */}
-                              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-white dark:border-[#172036] border-t-gray-800 dark:border-t-gray-800"></div>
+                      {/* التصنيفات الفرعية */}
+                      {cat.children?.map((subCat) => (
+                        <tr
+                          key={subCat.id}
+                          className="bg-gray-50 dark:bg-[#0f1629]"
+                        >
+                          <td className="ltr:text-left rtl:text-right whitespace-nowrap px-[20px] py-[15px] border-b border-gray-100 dark:border-[#172036] ltr:first:border-l ltr:last:border-r rtl:first:border-r rtl:last:border-l">
+                            <div className="flex items-center text-black dark:text-white transition-all hover:text-primary-500">
+                              <div className="ltr:ml-[20px] rtl:mr-[20px] w-[2px] h-[20px] bg-gray-300 dark:bg-gray-600"></div>
+                              <div className="relative w-[40px] h-[40px]">
+                                {subCat.image_url ? (
+                                  <img
+                                    src={subCat.image_url}
+                                    alt={subCat.name_ar}
+                                    className="w-full h-full object-cover rounded-md"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-100 dark:bg-[#15203c] rounded-md flex items-center justify-center">
+                                    <i className="material-symbols-outlined text-gray-400 dark:text-gray-500 text-xl">
+                                      image
+                                    </i>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="ltr:ml-[12px] rtl:mr-[12px]">
+                                <span className="block text-[15px] font-medium">
+                                  {subCat.name_ar}
+                                </span>
+                                <span className="block text-[13px] text-gray-500 dark:text-gray-400">
+                                  {subCat.name_en}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
+                          </td>
+
+                          <td className="ltr:text-left rtl:text-right whitespace-nowrap px-[20px] py-[15px] border-b border-gray-100 dark:border-[#172036] ltr:first:border-l ltr:last:border-r rtl:first:border-r rtl:last:border-l">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              تصنيف فرعي
+                            </span>
+                          </td>
+
+                          <td className="ltr:text-left rtl:text-right whitespace-nowrap px-[20px] py-[15px] border-b border-gray-100 dark:border-[#172036] ltr:first:border-l ltr:last:border-r rtl:first:border-r rtl:last:border-l">
+                            <div className="flex items-center gap-[9px]">
+                              <div className="relative group">
+                                <button
+                                  onClick={() => openEditModal(subCat)}
+                                  className="text-gray-500 leading-none"
+                                  type="button"
+                                >
+                                  <i className="material-symbols-outlined !text-md">
+                                    edit
+                                  </i>
+                                </button>
+
+                                {/* Tooltip */}
+                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  تعديل
+                                  {/* Arrow */}
+                                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-white dark:border-[#172036] border-t-gray-800 dark:border-t-gray-800"></div>
+                                </div>
+                              </div>
+
+                              <div className="relative group">
+                                <button
+                                  onClick={() => openDeleteModal(subCat)}
+                                  className="text-danger-500 leading-none"
+                                >
+                                  <i className="material-symbols-outlined !text-md">
+                                    delete
+                                  </i>
+                                </button>
+
+                                {/* Tooltip */}
+                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  مسح
+                                  {/* Arrow */}
+                                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-white dark:border-[#172036] border-t-gray-800 dark:border-t-gray-800"></div>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
                   ))
                 )}
               </tbody>
@@ -312,11 +418,32 @@ export default function CategoriesPage() {
               <input
                 type="text"
                 placeholder="الاسم بالإنجليزية"
-                className="w-full mb-6 px-4 py-3 border border-gray-300 dark:border-[#172036] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white dark:bg-[#0c1427] text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full mb-4 px-4 py-3 border border-gray-300 dark:border-[#172036] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white dark:bg-[#0c1427] text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 value={editEn}
                 onChange={(e) => setEditEn(e.target.value)}
                 disabled={isUpdating}
               />
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
+                  التصنيف الرئيسي (اختياري)
+                </label>
+                <select
+                  value={editParentId || ""}
+                  onChange={(e) => setEditParentId(e.target.value || null)}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-[#172036] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white dark:bg-[#0c1427] text-gray-900 dark:text-white"
+                  disabled={isUpdating}
+                >
+                  <option value="">تصنيف رئيسي</option>
+                  {parentCategories
+                    ?.filter((cat) => cat.id !== editingCategory?.id)
+                    .map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name_ar}
+                      </option>
+                    ))}
+                </select>
+              </div>
               <div className="flex justify-end gap-4">
                 <button
                   onClick={closeEditModal}
@@ -414,11 +541,30 @@ export default function CategoriesPage() {
               <input
                 type="text"
                 placeholder="الاسم بالإنجليزية"
-                className="w-full mb-6 px-4 py-3 border border-gray-300 dark:border-[#172036] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white dark:bg-[#0c1427] text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full mb-4 px-4 py-3 border border-gray-300 dark:border-[#172036] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white dark:bg-[#0c1427] text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 value={newEn}
                 onChange={(e) => setNewEn(e.target.value)}
                 disabled={isAdding}
               />
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
+                  التصنيف الرئيسي (اختياري)
+                </label>
+                <select
+                  value={newParentId || ""}
+                  onChange={(e) => setNewParentId(e.target.value || null)}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-[#172036] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white dark:bg-[#0c1427] text-gray-900 dark:text-white"
+                  disabled={isAdding}
+                >
+                  <option value="">تصنيف رئيسي</option>
+                  {parentCategories?.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name_ar}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="flex justify-end gap-4">
                 <button
                   onClick={() => setIsAddModalOpen(false)}

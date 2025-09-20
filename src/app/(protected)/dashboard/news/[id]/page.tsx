@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useCategories } from "@/components/news/categories/useCategories";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
@@ -189,12 +190,16 @@ export default function EditProductPage() {
                       className="h-[55px] rounded-md border border-gray-200 dark:border-[#172036] bg-white dark:bg-[#0c1427] px-[13px] block w-full outline-0 cursor-pointer transition-all focus:border-primary-500"
                     >
                       {categories?.map((category) => (
-                        <option
-                          key={category.id}
-                          value={category.id.toString()}
-                        >
-                          {category.name_ar}
-                        </option>
+                        <React.Fragment key={category.id}>
+                          <option value={category.id}>
+                            {category.name_ar}
+                          </option>
+                          {category.children?.map((subCategory) => (
+                            <option key={subCategory.id} value={subCategory.id}>
+                              &nbsp;&nbsp;{subCategory.name_ar}
+                            </option>
+                          ))}
+                        </React.Fragment>
                       ))}
                     </select>
                   </div>

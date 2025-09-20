@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   Editor,
@@ -273,12 +273,16 @@ const CreateProductForm: React.FC = () => {
                     >
                       <option value="">اختر التصنيف</option>
                       {categories?.map((category) => (
-                        <option
-                          key={category.id}
-                          value={category.id.toString()}
-                        >
-                          {category.name_ar}
-                        </option>
+                        <React.Fragment key={category.id}>
+                          <option value={category.id}>
+                            {category.name_ar}
+                          </option>
+                          {category.children?.map((subCategory) => (
+                            <option key={subCategory.id} value={subCategory.id}>
+                              &nbsp;&nbsp;{subCategory.name_ar}
+                            </option>
+                          ))}
+                        </React.Fragment>
                       ))}
                     </select>
                   </div>

@@ -8,6 +8,7 @@ interface UpdateCategoryPayload {
   name_ar: string;
   name_en: string;
   image?: File;
+  parent_id?: string | null;
 }
 
 export function useUpdateCategory() {
@@ -19,6 +20,7 @@ export function useUpdateCategory() {
       name_ar,
       name_en,
       image,
+      parent_id,
     }: UpdateCategoryPayload) => {
       let image_url = undefined;
 
@@ -38,9 +40,13 @@ export function useUpdateCategory() {
         image_url = publicUrl;
       }
 
+      const updateData: any = { name_ar, name_en };
+      if (image_url !== undefined) updateData.image_url = image_url;
+      if (parent_id !== undefined) updateData.parent_id = parent_id;
+
       const { error } = await supabase
         .from("categories")
-        .update({ name_ar, name_en, image_url })
+        .update(updateData)
         .eq("id", id);
 
       if (error) throw new Error(error.message);
@@ -48,6 +54,7 @@ export function useUpdateCategory() {
     onSuccess: () => {
       toast.success("تم تحديث التصنيف بنجاح");
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["parent-categories"] });
     },
     onError: (error) => {
       toast.error("فشل في تحديث التصنيف: " + error.message);
