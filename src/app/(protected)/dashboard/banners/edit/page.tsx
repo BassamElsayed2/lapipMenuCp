@@ -93,7 +93,7 @@ const EditBannerForm: React.FC = () => {
     try {
       setIsUploadingImage(true);
 
-      let finalData: Partial<Banner> = {
+      const finalData: Partial<Banner> = {
         link: data.link || undefined,
       };
 
