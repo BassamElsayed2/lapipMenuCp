@@ -8,7 +8,10 @@ import {
   deleteProduct,
   getProducts,
 } from "../../../../../services/apiProducts";
-import { getCategories } from "../../../../../services/apiCategories";
+import {
+  getCategories,
+  CategoryWithChildren,
+} from "../../../../../services/apiCategories";
 import toast from "react-hot-toast";
 
 const ProductListTable: React.FC = () => {
@@ -54,15 +57,33 @@ const ProductListTable: React.FC = () => {
     [key: string]: string;
   }>({});
 
+  const [subCategories, setSubCategories] = useState<
+    {
+      id: string;
+      name_ar: string;
+      name_en: string;
+      parent_id?: string | null;
+    }[]
+  >([]);
+
   useEffect(() => {
     async function fetchCategories() {
       try {
         const categories = await getCategories();
-        // نبني خريطة id => category name
+        // نبني خريطة id => category name تشمل جميع التصنيفات (الرئيسية والفرعية)
         const map: Record<string, string> = {};
-        categories.forEach((cat) => {
-          map[cat.id.toString()] = cat.name_ar;
-        });
+
+        const buildCategoryMap = (cats: CategoryWithChildren[]) => {
+          cats.forEach((cat) => {
+            map[cat.id.toString()] = cat.name_ar;
+            // إضافة التصنيفات الفرعية أيضاً
+            if (cat.children && cat.children.length > 0) {
+              buildCategoryMap(cat.children);
+            }
+          });
+        };
+
+        buildCategoryMap(categories);
         setCategoriesMap(map);
       } catch (err) {
         console.error(err);
@@ -70,6 +91,36 @@ const ProductListTable: React.FC = () => {
     }
 
     fetchCategories();
+  }, []);
+
+  // جلب التصنيفات الفرعية فقط للفلتر
+  useEffect(() => {
+    async function fetchSubCategories() {
+      try {
+        const allCategories = await getCategories();
+        const subCats: {
+          id: string;
+          name_ar: string;
+          name_en: string;
+          parent_id?: string | null;
+        }[] = [];
+
+        const extractSubCategories = (cats: CategoryWithChildren[]) => {
+          cats.forEach((cat) => {
+            if (cat.children && cat.children.length > 0) {
+              subCats.push(...cat.children);
+            }
+          });
+        };
+
+        extractSubCategories(allCategories);
+        setSubCategories(subCats);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchSubCategories();
   }, []);
 
   const queryClient = useQueryClient();
@@ -190,16 +241,16 @@ const ProductListTable: React.FC = () => {
             <option value="year">هذا العام</option>
           </select>
 
-          {/* Category Filter */}
+          {/* Category Filter - التصنيفات الفرعية فقط */}
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="w-full p-2 border transition border-[#f2f2f2] hover:bg-[#f2f2f2] rounded-lg outline-none dark:border-[#172036] dark:hover:bg-[#172036] dark:bg-[#0c1427] dark:text-white"
           >
-            <option value="">جميع التصنيفات</option>
-            {Object.entries(categoriesMap).map(([id, name]) => (
-              <option key={id} value={id}>
-                {name}
+            <option value="">جميع التصنيفات الفرعية</option>
+            {subCategories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name_ar}
               </option>
             ))}
           </select>

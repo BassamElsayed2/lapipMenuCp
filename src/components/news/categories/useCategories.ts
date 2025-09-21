@@ -3,8 +3,6 @@ import {
   getCategories,
   getParentCategories,
   getSubCategories,
-  type CategoryWithChildren,
-  type Category,
 } from "../../../../services/apiCategories";
 
 export function useCategories() {

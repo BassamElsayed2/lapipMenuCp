@@ -40,7 +40,7 @@ export function useUpdateCategory() {
         image_url = publicUrl;
       }
 
-      const updateData: any = { name_ar, name_en };
+      const updateData: Record<string, unknown> = { name_ar, name_en };
       if (image_url !== undefined) updateData.image_url = image_url;
       if (parent_id !== undefined) updateData.parent_id = parent_id;
 
