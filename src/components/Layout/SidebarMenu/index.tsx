@@ -91,6 +91,17 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ toggleActive }) => {
                     تصنيفات
                   </Link>
                 </li>
+                <li className="sidemenu-item mb-[4px] last:mb-0">
+                  <Link
+                    href="/dashboard/banners"
+                    className={`sidemenu-link rounded-md flex items-center relative transition-all font-medium text-gray-500 dark:text-gray-400 py-[9px] ltr:pl-[38px] ltr:pr-[30px] rtl:pr-[14px] rtl:pl-[30px] hover:text-primary-500 hover:bg-primary-50 w-full text-left dark:hover:bg-[#15203c] ${
+                      pathname.startsWith("/dashboard/banners") ? "active" : ""
+                    }`}
+                  >
+                    <i className="ri-image-line  transition-all text-gray-500 dark:text-gray-400 ltr:mr-[7px] rtl:ml-[7px] !text-[22px] leading-none relative -top-px"></i>
+                    البانرز
+                  </Link>
+                </li>
               </ul>
             </div>
 

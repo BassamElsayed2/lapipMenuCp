@@ -1,5 +1,6 @@
 import { decode } from "base64-arraybuffer";
 import supabase from "./supabase";
+import { compressImage } from "./imageCompression";
 
 export interface Product {
   id?: string;
@@ -141,13 +142,16 @@ export async function uploadProductImage(
   let fileData: File | ArrayBuffer;
 
   if (file instanceof File) {
-    fileExt = file.name.split(".").pop()!;
+    // ضغط الصورة قبل الرفع
+    const compressedFile = await compressImage(file, 1920, 1080, 0.8);
+
+    fileExt = "jpg"; // بعد الضغط تصبح الصورة jpg
     fileName = `${folder}/${Date.now()}-${Math.random()
       .toString(36)
       .substring(2)}.${fileExt}`;
-    fileData = file;
+    fileData = compressedFile;
   } else {
-    // Base64 case
+    // Base64 case - لا يمكن ضغطها هنا لأنها base64
     fileExt = file.name.split(".").pop()!;
     fileName = `${folder}/${Date.now()}-${Math.random()
       .toString(36)
@@ -158,7 +162,7 @@ export async function uploadProductImage(
   const { error } = await supabase.storage
     .from("product-images")
     .upload(fileName, fileData, {
-      contentType: file instanceof File ? file.type : `image/${fileExt}`,
+      contentType: file instanceof File ? "image/jpeg" : `image/${fileExt}`,
     });
 
   if (error) {
@@ -181,13 +185,16 @@ export async function uploadProductTypeImage(
   let fileData: File | ArrayBuffer;
 
   if (file instanceof File) {
-    fileExt = file.name.split(".").pop()!;
+    // ضغط الصورة قبل الرفع
+    const compressedFile = await compressImage(file, 1920, 1080, 0.8);
+
+    fileExt = "jpg"; // بعد الضغط تصبح الصورة jpg
     fileName = `product-type-img/${Date.now()}-${Math.random()
       .toString(36)
       .substring(2)}.${fileExt}`;
-    fileData = file;
+    fileData = compressedFile;
   } else {
-    // Base64 case
+    // Base64 case - لا يمكن ضغطها هنا لأنها base64
     fileExt = file.name.split(".").pop()!;
     fileName = `product-type-img/${Date.now()}-${Math.random()
       .toString(36)
@@ -198,7 +205,7 @@ export async function uploadProductTypeImage(
   const { error } = await supabase.storage
     .from("product-type-img")
     .upload(fileName, fileData, {
-      contentType: file instanceof File ? file.type : `image/${fileExt}`,
+      contentType: file instanceof File ? "image/jpeg" : `image/${fileExt}`,
     });
 
   if (error) {

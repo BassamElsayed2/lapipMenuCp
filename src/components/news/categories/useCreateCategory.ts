@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import supabase from "../../../../services/supabase";
+import { compressImage } from "../../../../services/imageCompression";
 
 export function useAddCategory() {
   const queryClient = useQueryClient();
@@ -20,11 +21,15 @@ export function useAddCategory() {
       let image_url = undefined;
 
       if (image) {
-        const fileExt = image.name.split(".").pop();
-        const fileName = `${Date.now()}.${fileExt}`;
+        // ضغط الصورة قبل الرفع
+        const compressedImage = await compressImage(image, 1920, 1080, 0.8);
+
+        const fileName = `${Date.now()}.jpg`; // بعد الضغط تصبح jpg
         const { error: uploadError } = await supabase.storage
           .from("cat-img")
-          .upload(fileName, image);
+          .upload(fileName, compressedImage, {
+            contentType: "image/jpeg",
+          });
 
         if (uploadError) throw new Error(uploadError.message);
 

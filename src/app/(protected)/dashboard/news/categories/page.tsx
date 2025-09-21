@@ -396,6 +396,9 @@ export default function CategoriesPage() {
                 <label className="block text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
                   الصورة
                 </label>
+                <p className="text-xs text-blue-500 mb-2">
+                  سيتم ضغط الصورة تلقائياً لتحسين الأداء
+                </p>
                 <div className="flex items-center gap-4">
                   {editImagePreview && (
                     <Image
@@ -521,6 +524,9 @@ export default function CategoriesPage() {
                 <label className="block text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
                   الصورة
                 </label>
+                <p className="text-xs text-blue-500 mb-2">
+                  سيتم ضغط الصورة تلقائياً لتحسين الأداء
+                </p>
                 <div className="flex items-center gap-4">
                   {newImagePreview && (
                     <Image

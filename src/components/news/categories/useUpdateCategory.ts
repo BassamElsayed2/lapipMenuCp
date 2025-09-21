@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import toast from "react-hot-toast";
 import supabase from "../../../../services/supabase";
+import { compressImage } from "../../../../services/imageCompression";
 
 interface UpdateCategoryPayload {
   id: string;
@@ -25,11 +26,15 @@ export function useUpdateCategory() {
       let image_url = undefined;
 
       if (image) {
-        const fileExt = image.name.split(".").pop();
-        const fileName = `${id}-${Date.now()}.${fileExt}`;
+        // ضغط الصورة قبل الرفع
+        const compressedImage = await compressImage(image, 1920, 1080, 0.8);
+
+        const fileName = `${id}-${Date.now()}.jpg`; // بعد الضغط تصبح jpg
         const { error: uploadError } = await supabase.storage
           .from("cat-img")
-          .upload(fileName, image);
+          .upload(fileName, compressedImage, {
+            contentType: "image/jpeg",
+          });
 
         if (uploadError) throw new Error(uploadError.message);
 

@@ -239,6 +239,11 @@ const CreateProductForm: React.FC = () => {
                               Click to upload
                             </strong>
                             <br /> you file here
+                            <br />
+                            <span className="text-xs text-blue-500">
+                              Images will be compressed automatically for better
+                              performance
+                            </span>
                           </p>
                         </div>
 
